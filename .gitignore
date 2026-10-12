@@ -1,0 +1,14 @@
+# Local development links. The Host half resolves @deepseek-ai/schemastery and
+# @deepseek-ai/dsh-llm from the Harness installation; never commit those.
+node_modules/
+
+# Packed tarballs a profile installs.
+*.tgz
+dist/
+
+# Editor and OS noise.
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+*.log

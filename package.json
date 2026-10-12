@@ -1,0 +1,60 @@
+{
+  "name": "dsh-input-optimizer",
+  "version": "1.0.0",
+  "private": true,
+  "description": "DeepSeek Harness plugin: a four-pointed-star button left of the composer model selector that rewrites your draft before you send it — fixing grammar, ambiguity and wrong execution order — plus a dedicated settings page.",
+  "type": "module",
+  "main": "lib/index.js",
+  "exports": {
+    ".": "./lib/index.js",
+    "./client": "./lib/client.js",
+    "./package.json": "./package.json",
+    "./cordis.patch.yml": "./cordis.patch.yml",
+    "./locale/*.json": "./locale/*.json"
+  },
+  "icon": "./icon.svg",
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    },
+    "client": {
+      "platform": "web",
+      "immediately": true,
+      "inject": [
+        "@deepseek-ai/dsh-client-locale",
+        "@deepseek-ai/dsh-client-ui-conversation",
+        "@deepseek-ai/dsh-client-ui-settings"
+      ]
+    },
+    "engines": {
+      "dsh": ">=0.2.0-rc.2"
+    }
+  },
+  "files": [
+    "lib/index.js",
+    "lib/client.js",
+    "cordis.patch.yml",
+    "locale/*.json",
+    "icon.svg",
+    "README.md",
+    "LICENSE"
+  ],
+  "keywords": [
+    "dsh",
+    "dsh-plugin",
+    "deepseek-harness",
+    "prompt",
+    "prompt-optimizer"
+  ],
+  "license": "MIT",
+  "peerDependencies": {
+    "@deepseek-ai/cordis": "~4.0.4",
+    "@deepseek-ai/schemastery": "~3.18.4",
+    "@deepseek-ai/dsh-llm": ">=0.2.0-rc.2",
+    "@deepseek-ai/dsh-host-webserver": ">=0.2.0-rc.2",
+    "@deepseek-ai/dsh-client-locale": ">=0.2.0-rc.2",
+    "@deepseek-ai/dsh-client-ui-conversation": ">=0.2.0-rc.2",
+    "@deepseek-ai/dsh-client-ui-settings": ">=0.2.0-rc.2",
+    "react": "^18.2.0"
+  }
+}

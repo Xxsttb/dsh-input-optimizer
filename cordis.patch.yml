@@ -1,0 +1,10 @@
+# Bundle patch for dsh-input-optimizer.
+#
+# The `id` below is load-bearing: it is the profile entry id, and the Harness
+# settings service addresses this plugin's configurable fields by that exact
+# string. The Client half hard-codes the same literal ("input-optimizer") when
+# it asks for the config form, because a Client package must not depend on a
+# Host package just to learn its own namespace.
+- insert:
+    - id: input-optimizer
+      name: 'dsh-input-optimizer'
