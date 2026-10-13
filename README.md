@@ -141,6 +141,11 @@ The shipped rewrite instruction is the five-goal prompt in
 [What it does](#what-it-does). It is written by an AI, it is editable, and
 replacing it is the intended way to re-aim the optimizer.
 
+On/off settings use a capsule switch rather than a checkbox, matching the
+Harness's own switch: the visual state keys off `aria-checked`, so what is drawn
+and what assistive technology reports cannot disagree. The plugin draws its own
+control because a client plugin may not require the Harness's client packages.
+
 ### Model resolution
 
 Each rewrite resolves a route in this order, and reports which one it used in
