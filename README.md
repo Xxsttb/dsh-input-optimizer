@@ -1,6 +1,6 @@
 # dsh-input-optimizer
 
-A **DeepSeek Harness** plugin that does three things:
+A **DeepSeek Harness** plugin that does four things:
 
 1. **Rewrites your draft.** A four-pointed-star button sits left of the
    composer's model selector. Press it, and the draft you have typed — but not
@@ -9,8 +9,12 @@ A **DeepSeek Harness** plugin that does three things:
 2. **Edits a message you already sent.** Every user message carries a pencil.
    It swaps the composer for an editing area without touching your draft, and
    sending cuts a new branch from just before that message.
-3. **Draws the conversation's branching history** as a memory tree in the right
-   sidebar, in two modes.
+3. **Asks a question again with no memory.** Every model reply carries a circular
+   restart arrow: it re-answers that one message in a brand-new conversation that
+   carries none of the earlier turns.
+4. **Draws the conversation's branching history** as a memory tree in the right
+   sidebar, in two modes. The same `‹ N/M ›` arrows switch between every answer a
+   question has received, however each one was produced.
 
 ```text
 [ star ] [ model selector ] [ send ]
@@ -107,17 +111,52 @@ mean asking a different question, not fixing the one you asked.
 
 ### Stepping between versions
 
-Once a message has been edited, its action row grows `‹ 1/3 ›` arrows with an
-`N/M` counter. The arrows switch between the conversations that message exists
-in — the original first, then each branch in the order they were cut — and a
-tooltip on the group says which one you are looking at. The record is local to
-the browser.
+Once a message has been edited — or a reply regenerated — the action row grows
+`‹ 1/3 ›` arrows with an `N/M` counter. The arrows switch between the
+conversations that message exists in: the original first, then each branch in the
+order they were cut. A tooltip on the group says which one you are looking at. The
+record is local to the browser.
+
+The arrows under a **reply** lead to every answer the question received, whether
+each came from editing the question or from regenerating the answer, because both
+paths write to the same record.
 
 ### When the pencil is disabled
 
-A message that referred to a file with `@path` is checked against the file
-before the pencil is offered. If the file has changed, is gone, or cannot be
-read, **the pencil is disabled** and the reason is shown under the bubble.
+A message is editable only when re-asking it cannot mislead the model. Two things
+are checked, and either one being true disables the pencil and shows the reason
+under the bubble.
+
+**The tools the reply used.** Editing cuts a branch before your message, so the
+model in that branch meets a workspace that the previous reply may already have
+rewritten — and it has no idea, because the turns that did the rewriting are
+gone. So a turn is editable only when every tool it used only *reads*:
+
+| Allowed | Blocked |
+| --- | --- |
+| `read`, `read_image`, `glob`, `grep` | `write`, `edit`, `str_replace_editor` |
+| `web_search`, `web_fetch` | `pwsh`, `bash`, and any other shell |
+| `job_list`, `job_output`, `get_goal` | `skill`, `todo_write`, `present` |
+| `acp_status`, `acp_cache`, `search_context` | `decompress` (it writes a file when given `toFile`) |
+| `load_workspace_dependencies` | any tool this build does not know |
+
+Membership is decided by whether a tool can leave anything behind, not by whether
+it sounds passive — which is why `decompress` is on the blocked side even though
+it only reads context, and why a shell is blocked even when the command it ran
+happened to be `ls`.
+
+A plain chat reply used no tools at all, so it stays editable. The list is a
+whitelist: anything unrecognised blocks the pencil, because a tool that cannot be
+classified cannot be proven harmless. A reply that is still being written is
+blocked too, since editing it would race the answer already in flight.
+
+The very first message of a conversation has nothing before it to branch from, so
+its pencil is drawn disabled rather than hidden — a missing button reads as a bug,
+a disabled one explains itself.
+
+**The files the message referred to.** A message that mentioned a file with
+`@path` is checked against that file. If it has changed, is gone, or cannot be
+read, the pencil is disabled with the reason shown.
 
 The check goes through the Harness' own `workspaceFiles` service
 (`remote.workspaceFiles.stat`), so the fingerprint is the Host's, resolved
@@ -128,6 +167,33 @@ this file changed since the message was sent" is not answerable. The guard
 records a fingerprint the first time the plugin ever sees the message and blocks
 once the file no longer matches that fingerprint, is missing, or is unreadable.
 If a file changed while the message was never on screen, the guard cannot know.
+
+---
+
+## Asking again without memory
+
+Under every model reply, next to the copy button, sits a circular restart arrow.
+It answers **that same question again in a conversation that remembers nothing**.
+
+Pressing it does not fork. A fork carries the whole prefix with it, which is
+precisely the memory this is meant to be rid of. Instead a **brand-new Session**
+is created in the same working directory, your one message is sent there, and the
+Harness switches to it. The model sees that message and nothing before it — not
+your earlier turns, not the reply you were reading, not any file the reply had
+just rewritten. The original answer stays exactly where it was.
+
+- It works on **any** reply, not just the last one. Regenerating an earlier one
+  leaves the later turns behind in their conversation, untouched.
+- The original answer is never rewritten, for the same reason an edited message
+  is not: a Session log only grows.
+- While the new conversation is starting, the icon spins and the button is
+  disabled, so a second press cannot start a second Session.
+
+Because a regenerated answer lands in a conversation that shares neither lineage
+nor message seq with its siblings, it is filed under the same version record the
+pencil writes — anchored on the conversation the question was *first* asked in.
+That is what makes the arrows below it lead to every answer the question has
+received, however each one was produced.
 
 ---
 
@@ -309,8 +375,9 @@ dsh-input-optimizer/
 into `conversation.input.right` — the seat immediately left of
 `conversation.input.model` — the settings page into `settings.section`, the
 shadow user bubble into `conversation.chat.node`, the editor into the
-`conversation.composer` chain, and the memory tree into the right sidebar. It
-loads no Harness package as a module, per the client rules, and asks the
+`conversation.composer` chain, the regenerate/version actions into
+`conversation.chat.assistant-actions`, and the memory tree into the right sidebar.
+It loads no Harness package as a module, per the client rules, and asks the
 Harness' `remote.workspaceFiles` service about mentioned files instead of
 opening a route of its own.
 
@@ -331,6 +398,13 @@ Two of those registrations are worth knowing about if you fork this:
   returns non-null, so the plugin's editor only appears while its own pending
   interaction exists and everything else — approvals, questions, subagents —
   keeps working untouched.
+- **The regenerate button and the version arrows share one seat.** Both live in
+  `conversation.chat.assistant-actions`, which the Harness renders inside a
+  reply's action row between the copy button and the branch button. That seat
+  hands a plugin exactly one prop — the `messageId` of the finished answer — so
+  the plugin walks back from it to the turn, then to the user message that opened
+  it, to learn what to ask again and which version record to file the answer
+  under.
 
 
 The `id` in `cordis.patch.yml` (`input-optimizer`) is load-bearing. The Harness
