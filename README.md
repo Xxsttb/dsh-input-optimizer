@@ -344,8 +344,11 @@ half to learn it.
 
 The plugin is a plain two-half Harness bundle. Its Host half imports
 `@deepseek-ai/schemastery` and `@deepseek-ai/dsh-llm` as peer dependencies; a
-profile supplies those. To exercise the Host half outside a profile, point a
-local `node_modules/@deepseek-ai/` at the Harness installation's own copies.
+profile supplies those. Its Client half declares `remote` and
+`remote.workspaceFiles` (the latter carried by `dsh-api-remotes`) so the
+workspace-file namespace is in the module graph before the plugin activates. To
+exercise the Host half outside a profile, point a local
+`node_modules/@deepseek-ai/` at the Harness installation's own copies.
 
 ```sh
 # syntax check both halves, using the Harness runtime as the Node executable
