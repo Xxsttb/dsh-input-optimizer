@@ -226,7 +226,7 @@ config through the Harness settings service, so edits are saved to the profile's
 | **Provider** | *(empty)* | Used when following is off — or as a fallback when the followed model is unavailable. |
 | **Model** | *(empty)* | Same. |
 | **Reasoning effort** | **low** | How hard the model thinks. `none` sends no effort field at all. The list is read from the chosen model's own advertised efforts, so you cannot pick one a model does not support. |
-| **Max output tokens** | `4096` | Ceiling for one rewrite. |
+| **Max output tokens** | `4096` | Ceiling for one rewrite. `0` means no ceiling of this plugin's own: the request goes out without a `maxTokens` field. |
 | **Timeout** | `60000` ms | Wall-clock ceiling for one rewrite. |
 | **Send edit with** | **Ctrl+Enter** | The shortcut that sends an edited message. `Ctrl+Shift+Enter`, `Alt+Enter` and *none (button only)* are also offered. |
 
