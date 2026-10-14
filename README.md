@@ -119,6 +119,10 @@ A message that referred to a file with `@path` is checked against the file
 before the pencil is offered. If the file has changed, is gone, or cannot be
 read, **the pencil is disabled** and the reason is shown under the bubble.
 
+The check goes through the Harness' own `workspaceFiles` service
+(`remote.workspaceFiles.stat`), so the fingerprint is the Host's, resolved
+inside the session's working directory — this plugin reads no files itself.
+
 The limit is worth stating plainly: the Harness keeps no file history, so "has
 this file changed since the message was sent" is not answerable. The guard
 records a fingerprint the first time the plugin ever sees the message and blocks
@@ -254,7 +258,7 @@ rather than failing.
 
 ## HTTP surface
 
-The Client half talks to the Host half over four routes under
+The Client half talks to the Host half over three routes under
 `/plugins/input-optimizer`. They are same-origin only.
 
 | Route | Method | Body / query | Result |
@@ -262,7 +266,11 @@ The Client half talks to the Host half over four routes under
 | `/optimize` | `POST` | `{ text, session?: { provider, model } }` | `{ ok, text, provider, model, routeSource, reasoningEffort, truncated }` |
 | `/models` | `GET` | — | `{ ok, providers: [{ id, name, models: [{ id, name }] }] }` |
 | `/models/efforts` | `GET` | `?provider=&model=` | The efforts that model advertises |
-| `/stat` | `POST` | `{ paths: [...] }` | `{ ok, entries: [{ path, state, size?, fingerprint? }], truncated }` |
+
+The file check behind the pencil does **not** go through this plugin: it uses
+the Harness' own `workspaceFiles` service (`remote.workspaceFiles.stat`), so a
+file that a message mentioned is fingerprinted by the Host itself, inside the
+session's workspace, with no extra route.
 
 Errors are JSON: `{ ok: false, error: { code, message } }`. Codes you may see:
 
@@ -296,13 +304,15 @@ dsh-input-optimizer/
 ```
 
 `lib/index.js` is the Host half: it declares the configurable fields with
-`schemastery`, opens the four routes, runs the rewrite through
-`ctx.llm.stream()`, and looks up file state for the edit guard. `lib/client.js`
-is the Client half: it registers the star into `conversation.input.right` — the
-seat immediately left of `conversation.input.model` — the settings page into
-`settings.section`, the shadow user bubble into `conversation.chat.node`, the
-editor into the `conversation.composer` chain, and the memory tree into the
-right sidebar. It loads no Harness package as a module, per the client rules.
+`schemastery`, opens the three routes, and runs the rewrite through
+`ctx.llm.stream()`. `lib/client.js` is the Client half: it registers the star
+into `conversation.input.right` — the seat immediately left of
+`conversation.input.model` — the settings page into `settings.section`, the
+shadow user bubble into `conversation.chat.node`, the editor into the
+`conversation.composer` chain, and the memory tree into the right sidebar. It
+loads no Harness package as a module, per the client rules, and asks the
+Harness' `remote.workspaceFiles` service about mentioned files instead of
+opening a route of its own.
 
 Two of those registrations are worth knowing about if you fork this:
 
