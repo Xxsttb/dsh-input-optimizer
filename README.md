@@ -112,14 +112,45 @@ mean asking a different question, not fixing the one you asked.
 ### Stepping between versions
 
 Once a message has been edited — or a reply regenerated — the action row grows
-`‹ 1/3 ›` arrows with an `N/M` counter. The arrows switch between the
-conversations that message exists in: the original first, then each branch in the
-order they were cut. A tooltip on the group says which one you are looking at. The
-record is local to the browser.
+`‹ 1/3 ›` arrows with an `N/M` counter. The arrows switch between the answers
+that message exists in: the original first, then each branch in the order they
+were cut. A tooltip on the group says which one you are looking at. The record is
+local to the browser.
+
+**The arrows read the other answer where you are**, under the turn that asked the
+question — they do not throw you into another conversation. The counter under a
+message, the block under the turn, and the highlight in the memory tree all read
+one stored choice, so the three can never disagree about which answer you are
+reading. To *go* to a branch — to carry on the conversation there — use its open
+button (`↗`) in the memory tree, or the one on the answer block.
 
 The arrows under a **reply** lead to every answer the question received, whether
 each came from editing the question or from regenerating the answer, because both
 paths write to the same record.
+
+A question with a single answer draws no arrows and no block: nothing changes
+until a question has actually been asked again.
+
+### Where the other answers live
+
+Each answer to a question is a **real conversation** — its own working directory,
+its own tools, its own memory the model can be continued in — but it is **hidden
+from the session list**. A branch is archived as soon as it has answered and the
+reader is no longer inside it, so re-asking one question ten times leaves the
+session list exactly as long as it was.
+
+The order of operations matters and is deliberate:
+
+- A branch is **not** hidden while it is still answering. The Harness refuses
+  every model step in an archived Session, so archiving early would leave a
+  conversation that can never reply.
+- A branch is **not** hidden while you are inside it. Archiving the Session on
+  screen clears the screen.
+- Opening a branch **restores it first, then opens it**, because the shipped
+  session browser refuses to open an archived Session at all.
+
+So a hidden answer is never lost: click it in the tree and it is back on the
+list, openable and continuable like any other conversation.
 
 ### When the pencil is disabled
 
@@ -199,23 +230,29 @@ received, however each one was produced.
 
 ## The memory tree
 
-The right sidebar gains a **Memory tree** tab. It draws the conversation's
-lineage, not its transcript: which conversation came from which, and what was
-asked at each step.
+The right sidebar gains a **Memory tree** tab. It draws what the conversation
+**remembers**, turn by turn — not the lineage of conversations, but each question
+and every answer that question ever received.
 
 - **Stream** — the chain of conversations leading to the one you are reading,
   growing as it runs. This is the default.
-- **Full** — every conversation in the workspace, including branches you are not
-  on.
+- **Full** — every conversation the version records connect, so branches cut in
+  earlier conversations are drawn too.
 
-Each conversation is a node; hovering one shows the prompt that started it and
-how many turns it has, and a node's expanded rail lists its own turns. A dashed
-dot marks a running conversation, a filled one a finished conversation, and the
-current one is highlighted. Where a conversation has siblings, the same `‹ N/M ›`
-arrows appear, and clicking a node opens it.
+Each remembered turn is a node: hovering it shows the question that was asked and
+the answer it got, and a running turn is marked with a dashed dot. Under a turn
+that was asked more than once, each answer hangs as its own row, labelled with how
+it came about — *the original answer*, *you edited this question*, or *asked again
+with no memory* — and whether it is the one being read, in this conversation, or
+in another one. The same `‹ N/M ›` arrows appear next to the turn and next to the
+answer block, and they all move together.
 
-The data comes from the Harness's own session catalog and `turnOutline`
-projection — the tab reads what the session list already knows, it does not
+- Clicking an **answer** reads it in place, under its turn.
+- Clicking the `↗` beside an answer opens that conversation for real, restoring it
+  to the session list first.
+
+The data comes from the Harness's own `turnOutline` projection and the plugin's
+own version records — it reads what the session list already knows, it does not
 build a second log.
 
 ---
